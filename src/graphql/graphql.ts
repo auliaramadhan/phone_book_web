@@ -17,17 +17,17 @@ import { offsetLimitPagination } from '@apollo/client/utilities';
 //  ]);
 
 export const clientApollo = new ApolloClient({
-  cache: new InMemoryCache({}),
-  // cache: new InMemoryCache({
-  //   typePolicies: {
-  //     Query: {
-  //       fields: {
-  //         contact: offsetLimitPagination(),
-  //       },
-  //     },
-  //   },
+  // cache: new InMemoryCache({}),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          contact: offsetLimitPagination(),
+        },
+      },
+    },
 
-  // }),
+  }),
   // link: link,
   uri: 'https://wpe-hiring.tokopedia.net/graphql',
 });

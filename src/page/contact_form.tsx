@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { appColor, appFont, appLayout, appTheme } from '../theme'
 import { FaPause, FaStar, FaPhone, FaPlus, } from 'react-icons/fa'
 import ButtonPrimary from '../component/ButtonPrimary'
-import Spacing from '../component/spacing'
+import Spacing from '../component/spacing';
 import { DividerH } from '../component/divider';
 import InputTextField from '../component/InputTextField'
 import useArray from '../utils/useArray';
@@ -22,12 +22,14 @@ import { AddNumberlVar, AddNumberRes } from '../utils/types/contact_create'
 import { DeleteContactPhone } from '../graphql/deleteContact';
 import Spinner from '../component/spinner'
 import { toast, ToastContainer } from 'react-toastify'
+import ReactModal from 'react-modal'
 import 'react-toastify/dist/ReactToastify.css';
 
 const ContacForm: React.FC = props => {
    const [firstName, setFirstName] = useState('')
    const [lastName, setLastName] = useState('')
    const [listNumber, setListNumber] = useArray<string>([''])
+   const [showConfirm, setShowConfirm] = useState(false)
 
    const param = useParams()
    const navigate = useNavigate()
@@ -144,80 +146,14 @@ const ContacForm: React.FC = props => {
             <div css={[appLayout.rowCenter]}>
                <ButtonPrimary css={{ backgroundColor: appColor.secondaryBg, flex: 1 }}
                   onClick={async (e) => {
-                     const data = await deleteContactMutation({
-                        variables: {
-                           id: Number(param.id)
-                        }
-                     })
-                     if (data.data?.delete_contact_by_pk) {
-                        clientApollo.refetchQueries({
-                           include: [Get_Contact_List]
-                        })
-                        navigate('/')
-                     }
+                     onDelete()
                   }}
                >
                   <span css={appFont.body} >Hapus</span>
                </ButtonPrimary>
                <Spacing x={8} />
                <ButtonPrimary css={{ flex: 1 }}
-                  onClick={async (e) => {
-                     const regexNoSpecial = /^[a-zA-Z0-9 ]+$/
-                     const numberRegex = /^\+?[0-9]+$/
-
-                     // console.log(listNumber.every(e => numberRegex.test(e)))
-
-                     if (!(!!firstName && !!lastName && listNumber.every(e => !!e))) {
-                        toast('Data Harap Diisi', { position: 'bottom-center' })
-                        return;
-                     } else if (!(regexNoSpecial.test(firstName) && regexNoSpecial.test(lastName))) {
-                        toast('Nama Tidak Memakai Karakter Spesial', { position: 'bottom-center' })
-                        return;
-                     } else if (!listNumber.every(e => numberRegex.test(e))) {
-                        toast('Nomor tolong diisi angka', { position: 'bottom-center' })
-                        return;
-                     }
-                     await editContactMutation({
-                        variables: {
-                           id: Number(param.id),
-                           _set: {
-                              first_name: firstName,
-                              last_name: lastName,
-                              // phones: listNumber.map(v => ({ number: v }))
-                           }
-                        }
-                     })
-                     const phones = contactDetail.data?.contact_by_pk.phones
-                     listNumber.forEach(async (v, i) => {
-                        if (i < (phones?.length ?? 0)) {
-                           if (v === phones![i].number!) {
-                              // continue
-                           } else {
-                              const req = {
-                                 new_phone_number: v,
-                                 pk_columns: {
-                                    contact_id: Number(param.id!),
-                                    number: phones![i].number!,
-                                 }
-                              }
-                              const data = await editPhoneMutation({
-                                 variables: req
-                              })
-                              if (!data.data?.update_phone_by_pk) {
-                                 toast('Maaf terjadi kesalahan', { toastId: 1, position: 'bottom-center' })
-                              }
-                              console.log(req, data)
-                           }
-                        } else {
-                           await addPhoneMutation({
-                              variables: {
-                                 contact_id: Number(param.id),
-                                 phone_number: v,
-                              }
-                           })
-                        }
-                     })
-                  }}
+                  onClick={onSave}
 
                >
                   <span >Simpan</span>
@@ -226,8 +162,127 @@ const ContacForm: React.FC = props => {
 
             </div>
          </div>
+         {/* <ReactModal
+            isOpen={showConfirm}
+            css={{
+               position: 'absolute',
+               top: 0,
+               left: 0,
+               right: 0,
+               bottom: 0,
+               backgroundColor: appColor.bgModal,
+               height: '100%',
+               width: '100%',
+               display:'flex',
+               zIndex:'10001 !important',
+               alignItems :'center',
+               justifyContent :'center'
+            }}
+         >
+
+            <div css={[appLayout.columnCenter,  appLayout.selfCenter, {width :'15em', height:'15em', backgroundColor :'white', borderRadius : '1em', padding: '1em'}]}>
+
+               <div css={{flex : 1}} />
+               <p css={appFont.body}>Apakah anda Yakin akan Menghapus data {contactDetail.data?.contact_by_pk.first_name}</p>
+               <div css={{flex : 1}} />
+               <div css={[appLayout.rowEnd]}>
+                  <ButtonPrimary
+                     css={{
+                        backgroundColor: appColor.secondaryBg
+                     }}
+                     onClick={() => {
+                        setShowConfirm(false)
+                     }}
+                  >
+                     <span css={appFont.body}>Tidak</span>
+                  </ButtonPrimary>
+                  <Spacing x={16} />
+                  <ButtonPrimary
+                     onClick={() => {
+                        setShowConfirm(false)
+                     }}
+                     children='Iya'
+                  />
+               </div>
+               <div css={{flex : 1}} />
+            </div>
+
+         </ReactModal> */}
       </article>
    )
+
+   async function onDelete() {
+      const data = await deleteContactMutation({
+         variables: {
+            id: Number(param.id)
+         }
+      })
+      if (data.data?.delete_contact_by_pk) {
+         clientApollo.refetchQueries({
+            include: [Get_Contact_List]
+         })
+         navigate('/')
+      }
+   }
+   async function onSave(e: React.MouseEvent) {
+      const regexNoSpecial = /^[a-zA-Z0-9 ]+$/
+      const numberRegex = /^\+?[0-9]+$/
+
+      // console.log(listNumber.every(e => numberRegex.test(e)))
+
+      if (!(!!firstName && !!lastName && listNumber.every(e => !!e))) {
+         toast('Data Harap Diisi', { position: 'bottom-center' })
+         return;
+      } else if (!(regexNoSpecial.test(firstName) && regexNoSpecial.test(lastName))) {
+         toast('Nama Tidak Memakai Karakter Spesial', { position: 'bottom-center' })
+         return;
+      } else if (!listNumber.every(e => numberRegex.test(e))) {
+         toast('Nomor tolong diisi angka', { position: 'bottom-center' })
+         return;
+      }
+      await editContactMutation({
+         variables: {
+            id: Number(param.id),
+            _set: {
+               first_name: firstName,
+               last_name: lastName,
+               // phones: listNumber.map(v => ({ number: v }))
+            }
+         }
+      })
+      const phones = contactDetail.data?.contact_by_pk.phones
+      listNumber.forEach(async (v, i) => {
+         if (i < (phones?.length ?? 0)) {
+            if (v === phones![i].number!) {
+               // continue
+            } else {
+               const req = {
+                  new_phone_number: v,
+                  pk_columns: {
+                     contact_id: Number(param.id!),
+                     number: phones![i].number!,
+                  }
+               }
+               const data = await editPhoneMutation({
+                  variables: req
+               })
+               if (!data.data?.update_phone_by_pk) {
+                  toast('Maaf terjadi kesalahan', { toastId: 1, position: 'bottom-center' })
+               }
+               console.log(req, data)
+            }
+         } else {
+            await addPhoneMutation({
+               variables: {
+                  contact_id: Number(param.id),
+                  phone_number: v,
+               }
+            })
+         }
+      })
+
+
+   }
 }
 
 export default ContacForm
