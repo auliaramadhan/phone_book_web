@@ -9,7 +9,6 @@ import { Routes, Route } from 'react-router-dom'
 import ContacAddForm from './contact_add';
 
 function MainApp() {
-   const [count, setCount] = useState(0)
 
    return (
       <main css={appTheme.gridParent}>

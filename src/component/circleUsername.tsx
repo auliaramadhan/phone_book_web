@@ -13,7 +13,7 @@ interface ICircleUsername extends React.HTMLAttributes<HTMLDivElement> {
 const CircleUsername: React.FC<ICircleUsername> = ({ name, number, selected = false, ...divAttr }) => {
    return (
       <div {...divAttr} css={[appLayout.rowVCenter, cardCircle, selected && cardSelected]} >
-         <div css={[appLayout.columnCenter, appTheme.circle('3em', 'yellow')]} >
+         <div css={[appLayout.columnCenter, appTheme.circle('3em', 'yellow'), {minWidth : '3em'}]} >
             <span css={[appFont.bodyBold]} >
                {name.substring(0, 2).toUpperCase()}
             </span>

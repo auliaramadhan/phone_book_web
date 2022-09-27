@@ -7,10 +7,9 @@ import { bodyBold } from '../theme/appFont';
 
 const ButtonPrimary = styled.button([
    {
-      ...appFont.bodyBold,
+      ...appFont.buttonPrimary,
       backgroundColor: appColor.primary,
       borderRadius: '.25em',
-      color: 'white',
       padding: '.5em',
       border : 0,
       

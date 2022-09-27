@@ -34,5 +34,15 @@ export const circle = (size: number | string, color = 'transparent') => css({
    backgroundColor: color,
 })
 
+export const fullBgModal = css({
+   backgroundColor: appColor.bgModal,
+   zIndex: 100,
+   position: 'absolute',
+   top: 0,
+   bottom: 0,
+   left: 0,
+   right: 0,
+})
+
 
 export default {}

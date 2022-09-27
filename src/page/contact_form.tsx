@@ -20,6 +20,9 @@ import { DeleteContactPhoneRes as DeleteContactRes, DeleteContactPhoneVar as Del
 import { AddContactWithPhones, AddNumberToContact } from '../graphql/createContact'
 import { AddNumberlVar, AddNumberRes } from '../utils/types/contact_create'
 import { DeleteContactPhone } from '../graphql/deleteContact';
+import Spinner from '../component/spinner'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css';
 
 const ContacForm: React.FC = props => {
    const [firstName, setFirstName] = useState('')
@@ -41,7 +44,7 @@ const ContacForm: React.FC = props => {
    const [addPhoneMutation, addPhoneRes] = useMutation<AddNumberRes, AddNumberlVar>(AddNumberToContact)
    const [deleteContactMutation, deleteContactRes] = useMutation<DeleteContactRes, DeleteContactVar>(DeleteContactPhone)
 
-   const { favoritData, toggleOne } = React.useContext(FavoriteCtx)
+   const { favoritIds: favoritData, toggleOne } = React.useContext(FavoriteCtx)
 
    useEffect(() => {
       setFirstName(contactDetail.data?.contact_by_pk.first_name ?? '')
@@ -51,9 +54,15 @@ const ContacForm: React.FC = props => {
 
    const isFavorite = favoritData?.includes(contactDetail.data?.contact_by_pk.id!) ?? false
 
+   const isLoading = (editContacRes.loading || editPhoneRes.loading || addPhoneRes.loading || deleteContactRes.loading)
 
    return (
       <article css={appTheme.mainApp}>
+         {/* {isLoading &&
+            <div css={appTheme.fullBgModal}>
+               <Spinner />
+            </div>
+         } */}
          <div css={[appLayout.column, { padding: '1em', alignItems: 'stretch' }]} >
             <div css={[appLayout.rowVCenter]} >
                <div css={[appLayout.columnCenter, appTheme.circle('6em', 'yellow')]}>
@@ -74,8 +83,6 @@ const ContacForm: React.FC = props => {
                      color={isFavorite ? appColor.primary : appColor.divider}
                      onClick={(e) => {
                         toggleOne!(contactDetail.data?.contact_by_pk.id!)
-                        // clientApollo.refetchQueries({ include: [] })
-
                      }} />
                   <Spacing x={'1em'} />
                   <ButtonPrimary css={{
@@ -88,7 +95,7 @@ const ContacForm: React.FC = props => {
                   </ButtonPrimary>
                </div>
             </div>
-            {/* <span>{JSON.stringify(contactDetail.data?.contact_by_pk)}</span> */}
+            {/* <span>{JSON.stringify(favoritData)}</span> */}
             <Spacing y={'.5em'} />
             <DividerH />
             <Spacing y={'.5em'} />
@@ -117,7 +124,7 @@ const ContacForm: React.FC = props => {
                      value={listNumber[i]}
                      name={`number${i}`}
                      placeholder={`+62`}
-                     aria-label={`Number ${i}`}
+                     aria-label={`Number ${i + 1}`}
                      onChange={(e) => {
                         const input = e.target.value
                         setListNumber.update(i, input)
@@ -155,30 +162,54 @@ const ContacForm: React.FC = props => {
                <Spacing x={8} />
                <ButtonPrimary css={{ flex: 1 }}
                   onClick={async (e) => {
-                     editContactMutation({
+                     const regexNoSpecial = /^[a-zA-Z0-9 ]+$/
+                     const numberRegex = /^\+?[0-9]+$/
+
+                     // console.log(listNumber.every(e => numberRegex.test(e)))
+
+                     if (!(!!firstName && !!lastName && listNumber.every(e => !!e))) {
+                        toast('Data Harap Diisi', { position: 'bottom-center' })
+                        return;
+                     } else if (!(regexNoSpecial.test(firstName) && regexNoSpecial.test(lastName))) {
+                        toast('Nama Tidak Memakai Karakter Spesial', { position: 'bottom-center' })
+                        return;
+                     } else if (!listNumber.every(e => numberRegex.test(e))) {
+                        toast('Nomor tolong diisi angka', { position: 'bottom-center' })
+                        return;
+                     }
+                     await editContactMutation({
                         variables: {
                            id: Number(param.id),
                            _set: {
                               first_name: firstName,
                               last_name: lastName,
-                              phones: listNumber.map(v => ({ number: v }))
+                              // phones: listNumber.map(v => ({ number: v }))
                            }
                         }
                      })
                      const phones = contactDetail.data?.contact_by_pk.phones
                      listNumber.forEach(async (v, i) => {
                         if (i < (phones?.length ?? 0)) {
-                           await editPhoneMutation({
-                              variables: {
+                           if (v === phones![i].number!) {
+                              // continue
+                           } else {
+                              const req = {
                                  new_phone_number: v,
                                  pk_columns: {
-                                    contact_id: phones![i].id!,
+                                    contact_id: Number(param.id!),
                                     number: phones![i].number!,
                                  }
                               }
-                           })
+                              const data = await editPhoneMutation({
+                                 variables: req
+                              })
+                              if (!data.data?.update_phone_by_pk) {
+                                 toast('Maaf terjadi kesalahan', { toastId: 1, position: 'bottom-center' })
+                              }
+                              console.log(req, data)
+                           }
                         } else {
-                           addPhoneMutation({
+                           await addPhoneMutation({
                               variables: {
                                  contact_id: Number(param.id),
                                  phone_number: v,
@@ -189,8 +220,9 @@ const ContacForm: React.FC = props => {
                   }}
 
                >
-                  <span css={appFont.body} >Simpan</span>
+                  <span >Simpan</span>
                </ButtonPrimary>
+               <ToastContainer />
 
             </div>
          </div>

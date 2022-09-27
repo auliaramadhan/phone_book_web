@@ -2,7 +2,7 @@ import React from 'react'
 import { useLocalStorage } from '../useStorage'
 
 interface IFavoritContext {
-   favoritData?: number[];
+   favoritIds?: number[];
    setFavorit?: (favs: number[]) => void;
    toggleOne?: (favId: number) => void;
 }
@@ -31,7 +31,7 @@ export const FavoriteProvider: React.FC<any> = (props) => {
    }
 
    return (
-      <FavoriteCtx.Provider value={{ favoritData, setFavorit, toggleOne }}  >
+      <FavoriteCtx.Provider value={{ favoritIds: favoritData, setFavorit, toggleOne }}  >
          {props.children}
       </FavoriteCtx.Provider>
    )

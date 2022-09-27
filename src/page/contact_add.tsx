@@ -13,14 +13,17 @@ import { FavoriteCtx } from '../utils/context/favoriteContext'
 import { AddContactRes, AddContactVar, AddNumberRes } from '../utils/types/contact_create'
 import { AddContactWithPhones } from '../graphql/createContact'
 import { clientApollo } from '../graphql/graphql';
+import { useNavigate } from 'react-router-dom'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css';
 
 const ContacAddForm: React.FC = props => {
    const [firstName, setFirstName] = useState('')
    const [lastName, setLastName] = useState('')
    const [listNumber, setListNumber] = useArray<string>([''])
 
+   const navigate = useNavigate()
 
-   const { favoritData, toggleOne } = React.useContext(FavoriteCtx)
 
    const [addContactMutation, addContacRes] = useMutation<AddContactRes, AddContactVar>(AddContactWithPhones)
 
@@ -74,22 +77,47 @@ const ContacAddForm: React.FC = props => {
             <div css={[appLayout.rowCenter]}>
                <ButtonPrimary css={{ flex: 1 }}
                   onClick={async (e) => {
+                     const regexNoSpecial = /^[a-zA-Z0-9 ]+$/
+                     const numberRegex = /^\+?[0-9]+$/
+
+                     // console.log(listNumber.every(e => numberRegex.test(e)))
+
+                     if (!(!!firstName && !!lastName && listNumber.every(e => !!e))) {
+                        toast('Data Harap Diisi', { position: 'bottom-center' })
+                        return;
+                     } else if (!(regexNoSpecial.test(firstName) && regexNoSpecial.test(lastName))) {
+                        toast('Nama Tidak Memakai Karakter Spesial', { position: 'bottom-center' })
+                        return;
+                     } else if (!listNumber.every(e => numberRegex.test(e))) {
+                        toast('Nomor tolong diisi angka', { position: 'bottom-center' })
+                        return;
+                     }
+                     // return;
                      const dataReq = {
                         first_name: firstName,
                         last_name: lastName,
                         phones: listNumber.map(v => ({ number: v }))
                      }
                      console.log(dataReq)
-                     await addContactMutation({
-                        variables:  dataReq
+                     const result = await addContactMutation({
+                        variables: dataReq
+                     }).catch(err => {
+                        console.log(err)
+                        // toast(err, { position: 'bottom-center' })
                      })
-                     clientApollo.refetchQueries({
-                        include:[Get_Contact_List]
-                     })
+                     if (!result) {
+                        toast('Terdapat Duplikat', { position: 'bottom-center' })
+                     } else {
+                        navigate(0)
+                     }
+                     // clientApollo.refetchQueries({
+                     //    include:[Get_Contact_List]
+                     // })
                   }}
                >
-                  <span css={appFont.body} >Simpan <FaPlus /></span>
+                  <span >Simpan <FaPlus /></span>
                </ButtonPrimary>
+               <ToastContainer />
 
             </div>
          </div>

@@ -23,6 +23,7 @@ export const appColor = {
 
    // button
    button: '#E42313',
+   buttonFont: '#fff',
 
 
 

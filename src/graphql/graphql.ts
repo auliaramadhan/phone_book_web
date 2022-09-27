@@ -1,6 +1,7 @@
 import {
   ApolloClient, InMemoryCache, ApolloProvider, gql,
 } from '@apollo/client'
+import { offsetLimitPagination } from '@apollo/client/utilities';
 
 // const errorLink = ApolloClient.onError(({ graphqlErrors, networkError }) => {
 //    if (graphqlErrors) {
@@ -16,26 +17,17 @@ import {
 //  ]);
 
 export const clientApollo = new ApolloClient({
-  cache: new InMemoryCache({
-    typePolicies: {
-      Query: {
-        fields: {
-          contact: {
-            // Don't cache separate results based on
-            // any of this field's arguments.
-            keyArgs: false,
+  cache: new InMemoryCache({}),
+  // cache: new InMemoryCache({
+  //   typePolicies: {
+  //     Query: {
+  //       fields: {
+  //         contact: offsetLimitPagination(),
+  //       },
+  //     },
+  //   },
 
-            // Concatenate the incoming list items with
-            // the existing list items.
-            merge(existing = [], incoming) {
-              return [...existing, ...incoming];
-            },
-          }
-        }
-      }
-    }
-
-  }),
+  // }),
   // link: link,
   uri: 'https://wpe-hiring.tokopedia.net/graphql',
 });

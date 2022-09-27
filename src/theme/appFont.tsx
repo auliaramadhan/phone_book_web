@@ -31,6 +31,7 @@ export const caption = (theme: Theme) => css([fontDefault(theme), { fontSize: '1
 export const captionBold = (theme: Theme) => css([fontDefault(theme), { fontSize: '1rem', fontWeight: 'bold', color: appColor.secondaryText }]);
 export const captionSemiB = (theme: Theme) => css([fontDefault(theme), { fontSize: '1rem', fontWeight: 600, color: appColor.secondaryText }]);
 
+export const buttonPrimary = (theme: Theme) => css([fontDefault(theme), { fontWeight: 'bold', color: appColor.buttonFont }]);
 export const inputLabel = (theme: Theme) => css([fontDefault(theme), {fontWeight :'bold', color : appColor.secondaryText }]);
 
 

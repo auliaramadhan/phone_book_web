@@ -3,7 +3,7 @@ import { appColor, appFont, appTheme } from '../theme'
 import { FaPlus, FaStar } from 'react-icons/fa'
 import CircleUsername from '../component/circleUsername'
 import Spacing from '../component/spacing'
-import { useQuery, useMutation } from '@apollo/client'
+import { useQuery, useMutation, useLazyQuery } from '@apollo/client';
 import { Get_Contact_List } from '../graphql/listContact.graphql'
 import { ContactQuery, IContactListVar } from '../utils/types/contact_list';
 import { InView } from "react-intersection-observer";
@@ -12,26 +12,30 @@ import { useParams, useNavigate, NavigateFunction } from 'react-router-dom'
 import { useLocalStorage } from '../utils/useStorage'
 import { FavoriteCtx } from '../utils/context/favoriteContext'
 import ButtonPrimary from '../component/ButtonPrimary'
+import useUpdateEffect from '../utils/useUpdateEffect'
 
 
 const ContactList = () => {
-
-   const contactList = useQuery<ContactQuery, IContactListVar>(Get_Contact_List, {
+   const [contactListFetch ,contactListQuery] = useLazyQuery<ContactQuery, IContactListVar>(Get_Contact_List, {
       variables: {
-         limit: 10,
+         limit: 100,
          offset: 0
-      }
+      },
    })
 
-   const { favoritData, toggleOne } = React.useContext(FavoriteCtx)
+   React.useEffect(() => {
+      contactListFetch()
+   }, [])
+
+   const { favoritIds, toggleOne } = React.useContext(FavoriteCtx)
 
    const param = useParams()
    const navigation: NavigateFunction = useNavigate()
 
    const isMax = useRef(false)
 
-   const favorite = React.useMemo(() => contactList.data?.contact.filter((kontak) => favoritData?.includes(kontak.id!)) ?? [], [contactList.data, favoritData])
-   const nonFavorite = React.useMemo(() => contactList.data?.contact.filter((kontak) => !favoritData?.includes(kontak.id!)) ?? [], [contactList.data, favoritData])
+   const favorite = React.useMemo(() => contactListQuery.data?.contact.filter((kontak) => favoritIds?.includes(kontak.id!)) ?? [], [contactListQuery.data, favoritIds])
+   const nonFavorite = React.useMemo(() => contactListQuery.data?.contact.filter((kontak) => !favoritIds?.includes(kontak.id!)) ?? [], [contactListQuery.data, favoritIds])
 
    return (
       <aside css={appTheme.sideBar} >
@@ -48,9 +52,10 @@ const ContactList = () => {
                <ButtonPrimary css={{ flex: 1 }}
                   onClick={(e) => {
                      navigation('/new')
+                     // setOffset(state => state + 1)
                   }}
                >
-                  <span css={appFont.body} >Tambah Contact <FaPlus /></span>
+                  <span >Tambah Contact <FaPlus /></span>
                </ButtonPrimary>
                <Spacing y={4} />
                <span> <FaStar /> <span css={[appFont.title]}>Favorite </span></span>
@@ -75,7 +80,7 @@ const ContactList = () => {
             <Spacing y={4} />
             <span css={[appFont.title]}>Your Contacts </span>
             <Spacing y={4} />
-            {/* <span>{JSON.stringify(param)}</span> */}
+            {/* <span>{JSON.stringify(favorite)}</span> */}
             {
                nonFavorite.map((kontak, i) =>
                   <CircleUsername
@@ -90,14 +95,23 @@ const ContactList = () => {
             }
             <InView
                onChange={async (inView) => {
-                  console.log('cek length', contactList.data?.contact.length, isMax.current)
-                  if (inView && !isMax.current && !contactList.loading) {
-                     const currentLength = contactList.data?.contact.length;
-                     const data = await contactList.fetchMore({
+                  if (inView && !contactListQuery.loading) {
+                     const currentLength = contactListQuery.data?.contact.length;
+                     const data = await contactListQuery.fetchMore({
                         variables: {
                            offset: currentLength,
                            limit: 10,
                         },
+                        // updateQuery(previousQueryResult, options) {
+                        //    const data: ContactQuery = {
+                        //       contact: [
+                        //          ...previousQueryResult.contact,
+                        //          ...options.fetchMoreResult.contact,
+                        //       ]
+                        //    }
+                        //    console.log(data, options)
+                        //    return data
+                        // },
                      });
                      console.log('cek length after', data.data?.contact.length, data)
                      if (data.data.contact.length < 10) {
