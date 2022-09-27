@@ -1,6 +1,6 @@
 import React, { useContext, useRef, useState } from 'react'
-import { appFont, appTheme } from '../theme'
-import { FaStar } from 'react-icons/fa'
+import { appColor, appFont, appTheme } from '../theme'
+import { FaPlus, FaStar } from 'react-icons/fa'
 import CircleUsername from '../component/circleUsername'
 import Spacing from '../component/spacing'
 import { useQuery, useMutation } from '@apollo/client'
@@ -10,6 +10,8 @@ import { InView } from "react-intersection-observer";
 
 import { useParams, useNavigate, NavigateFunction } from 'react-router-dom'
 import { useLocalStorage } from '../utils/useStorage'
+import { FavoriteCtx } from '../utils/context/favoriteContext'
+import ButtonPrimary from '../component/ButtonPrimary'
 
 
 const ContactList = () => {
@@ -21,15 +23,15 @@ const ContactList = () => {
       }
    })
 
-   const [favorite, setFavorite, remove] = useLocalStorage<number[]>('favorite', [])
-   // const {favorite, setFavorite} = useContext(FavoriteContext)
+   const { favoritData, toggleOne } = React.useContext(FavoriteCtx)
 
    const param = useParams()
    const navigation: NavigateFunction = useNavigate()
 
    const isMax = useRef(false)
 
-   // const favorite = React.useMemo(() => contactList.data?.contact.map((v,i) =>), [contactList.data])
+   const favorite = React.useMemo(() => contactList.data?.contact.filter((kontak) => favoritData?.includes(kontak.id!)) ?? [], [contactList.data, favoritData])
+   const nonFavorite = React.useMemo(() => contactList.data?.contact.filter((kontak) => !favoritData?.includes(kontak.id!)) ?? [], [contactList.data, favoritData])
 
    return (
       <aside css={appTheme.sideBar} >
@@ -43,19 +45,27 @@ const ContactList = () => {
             <div css={{ paddingRight: '1em' }}>
                <p css={appFont.h3}>Contact List </p>
                <Spacing y={10} />
+               <ButtonPrimary css={{ flex: 1 }}
+                  onClick={(e) => {
+                     navigation('/new')
+                  }}
+               >
+                  <span css={appFont.body} >Tambah Contact <FaPlus /></span>
+               </ButtonPrimary>
+               <Spacing y={4} />
                <span> <FaStar /> <span css={[appFont.title]}>Favorite </span></span>
                <br />
 
             </div>
             <Spacing y={4} />
             {
-               contactList.data?.contact.filter((kontak) => favorite?.includes(kontak.id!)).map(
+               favorite.map(
                   (kontak, i) =>
                      <CircleUsername
                         css={{ marginBottom: '.5em' }}
                         selected={param['*'] == kontak.id}
                         name={`${kontak.first_name} ${kontak.last_name}`}
-                        number={kontak.phones![0].number}
+                        number={kontak.phones?.length ? kontak.phones![0]!.number : ''}
                         onClick={e => {
                            navigation(`/${kontak.id!}`)
                         }} />
@@ -65,9 +75,9 @@ const ContactList = () => {
             <Spacing y={4} />
             <span css={[appFont.title]}>Your Contacts </span>
             <Spacing y={4} />
-            <span>{JSON.stringify(param)}</span>
+            {/* <span>{JSON.stringify(param)}</span> */}
             {
-               contactList.data?.contact.map((kontak, i) =>
+               nonFavorite.map((kontak, i) =>
                   <CircleUsername
                      css={{ marginBottom: '.5em' }}
                      selected={param['*'] == kontak.id}
@@ -80,7 +90,8 @@ const ContactList = () => {
             }
             <InView
                onChange={async (inView) => {
-                  if (inView && isMax.current) {
+                  console.log('cek length', contactList.data?.contact.length, isMax.current)
+                  if (inView && !isMax.current && !contactList.loading) {
                      const currentLength = contactList.data?.contact.length;
                      const data = await contactList.fetchMore({
                         variables: {
@@ -88,7 +99,7 @@ const ContactList = () => {
                            limit: 10,
                         },
                      });
-                     console.log('cek length', data.data.contact.length)
+                     console.log('cek length after', data.data?.contact.length, data)
                      if (data.data.contact.length < 10) {
                         isMax.current = true;
                      }

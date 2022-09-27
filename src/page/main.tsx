@@ -6,6 +6,7 @@ import { appTheme } from '../theme';
 import ContactList from './contact_list';
 import ContacForm from './contact_form';
 import { Routes, Route } from 'react-router-dom'
+import ContacAddForm from './contact_add';
 
 function MainApp() {
    const [count, setCount] = useState(0)
@@ -17,6 +18,7 @@ function MainApp() {
          </Routes>
          <Routes>
             <Route path='/:id' element={<ContacForm />} />
+            <Route path='/new' element={<ContacAddForm />} />
          </Routes>
       </main>
    )

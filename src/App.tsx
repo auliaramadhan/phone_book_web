@@ -8,13 +8,16 @@ import ContacForm from './page/contact_form';
 import MainApp from './page/main';
 import { clientApollo } from './graphql/graphql';
 import { ApolloProvider } from '@apollo/client'
+import { FavoriteProvider } from './utils/context/favoriteContext';
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
     <ApolloProvider client={clientApollo}>
-      <MainApp />
+      <FavoriteProvider >
+        <MainApp />
+      </FavoriteProvider>
     </ApolloProvider>
   )
 }
