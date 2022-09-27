@@ -18,4 +18,7 @@ export const rowSpaceEvenly = css({ display: 'flex', flexDirection: 'row', justi
 export const rowTop = css({ display: 'flex', flexDirection: 'row', alignItems: 'start', })
 export const rowBottom = css({ display: 'flex', flexDirection: 'row', alignItems: 'end', })
 
+export const selfCenter = css({ alignSelf: 'center' })
+export const absoluteCenter = css({ top: 0,left: 0,right: 0,bottom: 0,position :'absolute' })
+
 export default {}
